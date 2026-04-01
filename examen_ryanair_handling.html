@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Examen Ryanair — Agent Handling</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f5f5f0; color: #1a1a1a; min-height: 100vh; }
+  .header { background: #073590; color: #fff; padding: 20px 16px 16px; text-align: center; }
+  .header h1 { font-size: 20px; font-weight: 600; margin-bottom: 4px; }
+  .header p { font-size: 13px; opacity: 0.85; }
+  .progress-bar { height: 4px; background: rgba(255,255,255,0.3); }
+  .progress-fill { height: 4px; background: #fff; transition: width 0.3s; }
+  .container { max-width: 600px; margin: 0 auto; padding: 16px; }
+  .card { background: #fff; border-radius: 12px; border: 1px solid #e8e8e4; padding: 16px; margin-bottom: 14px; }
+  .q-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+  .q-num { font-size: 12px; color: #888; font-weight: 500; }
+  .badge { font-size: 11px; padding: 3px 8px; border-radius: 6px; font-weight: 500; }
+  .b-codes { background: #E6F1FB; color: #0C447C; }
+  .b-bag { background: #FAEEDA; color: #633806; }
+  .b-proc { background: #E1F5EE; color: #085041; }
+  .b-pmr { background: #FBEAF0; color: #72243E; }
+  .b-gate { background: #FCEBEB; color: #791F1F; }
+  .b-spec { background: #EEEDFE; color: #3C3489; }
+  .q-text { font-size: 15px; font-weight: 600; line-height: 1.4; margin-bottom: 14px; color: #111; }
+  .choice { display: flex; align-items: center; gap: 12px; padding: 12px 14px; border: 1.5px solid #e8e8e4; border-radius: 10px; margin-bottom: 8px; cursor: pointer; transition: all 0.15s; user-select: none; -webkit-tap-highlight-color: transparent; }
+  .choice:active { transform: scale(0.98); }
+  .choice.selected { border-color: #073590; background: #EBF0FF; }
+  .choice.correct { border-color: #1D9E75; background: #E1F5EE; }
+  .choice.wrong { border-color: #D85A30; background: #FAECE7; }
+  .choice-dot { width: 20px; height: 20px; border-radius: 50%; border: 1.5px solid #ccc; flex-shrink: 0; display: flex; align-items: center; justify-content: center; transition: all 0.15s; }
+  .choice.selected .choice-dot { border-color: #073590; background: #073590; }
+  .choice.correct .choice-dot { border-color: #1D9E75; background: #1D9E75; }
+  .choice.wrong .choice-dot { border-color: #D85A30; background: #D85A30; }
+  .choice-dot-inner { width: 8px; height: 8px; border-radius: 50%; background: #fff; opacity: 0; }
+  .choice.selected .choice-dot-inner, .choice.correct .choice-dot-inner, .choice.wrong .choice-dot-inner { opacity: 1; }
+  .choice-label { font-size: 14px; color: #1a1a1a; line-height: 1.3; }
+  .choice.correct .choice-label { color: #085041; font-weight: 500; }
+  .choice.wrong .choice-label { color: #712B13; }
+  .btn { width: 100%; padding: 14px; border-radius: 12px; border: none; font-size: 16px; font-weight: 600; cursor: pointer; transition: all 0.15s; margin-top: 8px; }
+  .btn-primary { background: #073590; color: #fff; }
+  .btn-primary:hover { background: #052570; }
+  .btn-primary:active { transform: scale(0.98); }
+  .btn-outline { background: #fff; color: #073590; border: 1.5px solid #073590; margin-top: 12px; }
+  .sticky-btn { position: sticky; bottom: 0; background: #f5f5f0; padding: 12px 0 16px; }
+  .answered-count { font-size: 13px; color: #888; text-align: center; margin-top: 8px; }
+  .score-section { text-align: center; padding: 28px 16px 20px; }
+  .score-big { font-size: 56px; font-weight: 700; line-height: 1; }
+  .score-pct { font-size: 16px; color: #666; margin-top: 6px; }
+  .score-msg { font-size: 14px; margin-top: 12px; padding: 10px 16px; border-radius: 10px; font-weight: 500; }
+  .r-item { padding: 12px 14px; border-radius: 10px; margin-bottom: 8px; border: 1px solid; }
+  .r-ok { border-color: #0F6E56; background: #E1F5EE; }
+  .r-ko { border-color: #993C1D; background: #FAECE7; }
+  .r-ok .rq { color: #085041; font-size: 13px; font-weight: 600; margin-bottom: 4px; }
+  .r-ko .rq { color: #712B13; font-size: 13px; font-weight: 600; margin-bottom: 4px; }
+  .r-ok .ra { color: #0F6E56; font-size: 12px; }
+  .r-ko .ra { color: #993C1D; font-size: 12px; }
+  .section { display: none; }
+  .section.active { display: block; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>Ryanair — Agent Handling</h1>
+  <p>50 questions — Codes, bagages, procédures, PMR</p>
+</div>
+<div class="progress-bar"><div class="progress-fill" id="progress" style="width:0%"></div></div>
+
+<div class="container">
+  <div id="section-exam" class="section active">
+    <div id="questions-list"></div>
+    <div class="sticky-btn">
+      <button class="btn btn-primary" onclick="submitExam()">Soumettre les réponses</button>
+      <div class="answered-count" id="answered-count">0 / 50 répondues</div>
+    </div>
+  </div>
+  <div id="section-results" class="section">
+    <div class="card score-section" id="score-display"></div>
+    <div id="results-detail"></div>
+    <button class="btn btn-outline" onclick="retryExam()">Recommencer l'examen</button>
+    <div style="height:24px"></div>
+  </div>
+</div>
+
+<script>
+const questions = [
+  {id:1,cat:'b-codes',catLabel:'Codes check-in',text:'Que signifie le code ACI chez Ryanair ?',choices:['Check-in automatique gratuit','Check-in aéroport payant — 55€','Check-in online gratuit','Check-in prioritaire'],correct:1},
+  {id:2,cat:'b-codes',catLabel:'Codes check-in',text:'Que signifie AACI chez Ryanair ?',choices:['Airport check-in payant','Check-in automatique non payant','Check-in aéroport interdit','Check-in online automatique'],correct:1},
+  {id:3,cat:'b-codes',catLabel:'Codes bagages',text:'Que signifie le code CBAG chez Ryanair ?',choices:['Cabine bag 20kg','10kg soute','Priority boarding + cabine bag','Bagage cassé'],correct:1},
+  {id:4,cat:'b-codes',catLabel:'Codes bagages',text:'Que signifie PSA chez Ryanair ?',choices:['Passenger special assistance','Priority boarding + cabine bag','Petit sac à main','Pax sans assistance'],correct:1},
+  {id:5,cat:'b-codes',catLabel:'Codes bagages',text:'Que signifie BBG chez Ryanair ?',choices:['Baby bag gratuit','Bagage soute 20kg — 60€','Big bag gate','Bagage brisé gratuit'],correct:1},
+  {id:6,cat:'b-codes',catLabel:'Codes bagages',text:'Que signifie BG23 chez Ryanair ?',choices:['Bagage 23kg en gate','23kg soute réservé online uniquement','23kg cabine','Bagage gate 23€'],correct:1},
+  {id:7,cat:'b-gate',catLabel:'Codes gate',text:'Que signifie PBAG en gate chez Ryanair ?',choices:['Priority bag — gratuit','Paiement bagage en gate si OK sizer — 60€','Paiement bagage aéroport','Petit bagage accepté'],correct:1},
+  {id:8,cat:'b-gate',catLabel:'Codes gate',text:'Que signifie GBT (ou GBAT) en gate chez Ryanair ?',choices:['Gate bag tarif réduit — 60€','Paiement bagage en gate si PAS OK sizer — 75€','Grand bagage trolley','Gate boarding tarif'],correct:1},
+  {id:9,cat:'b-codes',catLabel:'Codes divers',text:'Que signifie le code ITG chez Ryanair ?',choices:['Item too big','Item to gate — poussette, chaise, va jusqu\'en gate','International transit gate','Item to ground'],correct:1},
+  {id:10,cat:'b-codes',catLabel:'Codes divers',text:'Que signifie RBG chez Ryanair ?',choices:['Remove bag gate','Réimprimer la boarding pass','Rebook gate','Reserved boarding gate'],correct:1},
+  {id:11,cat:'b-codes',catLabel:'Codes divers',text:'Que signifie dRB chez Ryanair ?',choices:['Double réservation bagage','Bagage abimé / fragile / cassé','Delayed return bag','Direct re-booking'],correct:1},
+  {id:12,cat:'b-codes',catLabel:'Équipements sportifs',text:'Que signifie BIKE chez Ryanair ?',choices:['Bagage interdit','Vélo — max 2 pièces/pers — max 30kg','Bagage isolé keep','Bike equipment 20kg'],correct:1},
+  {id:13,cat:'b-codes',catLabel:'Équipements sportifs',text:'Que signifie BULK chez Ryanair ?',choices:['Grand bagage lourd illimité','Grand équipement sportif — max 20kg','Bagage bulk 30kg','Bike unique large kit'],correct:1},
+  {id:14,cat:'b-codes',catLabel:'Équipements sportifs',text:'Que signifie MUSC chez Ryanair ?',choices:['Musical unlimited seat cabin','Instrument de musique — max 20kg','Music equipment 30kg','Bagage musical spécial'],correct:1},
+  {id:15,cat:'b-codes',catLabel:'Équipements sportifs',text:'Quel est le poids maximum d\'un vélo chez Ryanair ?',choices:['20kg','25kg','30kg','15kg'],correct:2},
+  {id:16,cat:'b-codes',catLabel:'Équipements sportifs',text:'Quel est le poids maximum des équipements sportifs (SKI, SPRT, GOLF, BULK) chez Ryanair ?',choices:['15kg','25kg','30kg','20kg'],correct:3},
+  {id:17,cat:'b-bag',catLabel:'Dimensions bagages',text:'Quelles sont les dimensions du bagage cabine (trolley) chez Ryanair ?',choices:['55x40x23 cm','60x40x20 cm','55x40x20 cm','50x40x20 cm'],correct:2},
+  {id:18,cat:'b-bag',catLabel:'Dimensions bagages',text:'Quelles sont les dimensions du petit bagage à main chez Ryanair ?',choices:['40x20x25 cm','45x30x20 cm','40x30x20 cm','35x25x15 cm'],correct:2},
+  {id:19,cat:'b-bag',catLabel:'Tarifs bagages',text:'Quel est le tarif par kg en excédent chez Ryanair ?',choices:['10€/kg','11€/kg','13€/kg','15€/kg'],correct:2},
+  {id:20,cat:'b-bag',catLabel:'Tarifs bagages',text:'Quel est le tarif d\'un CBAG (10kg soute) chez Ryanair ?',choices:['25€','36€','50€','60€'],correct:1},
+  {id:21,cat:'b-bag',catLabel:'Tarifs bagages',text:'Quel est le tarif d\'un BBG (20kg soute) chez Ryanair ?',choices:['36€','50€','60€','75€'],correct:2},
+  {id:22,cat:'b-bag',catLabel:'Options tarifaires',text:'Que comprend le tarif "Basic Fare" chez Ryanair ?',choices:['Priority + 2 cabines','1 petit bagage à main seulement (non prioritaire)','1 bagage 20kg + siège','2 cabin bags + siège'],correct:1},
+  {id:23,cat:'b-bag',catLabel:'Options tarifaires',text:'Que comprend le tarif "Regular" chez Ryanair ?',choices:['1 petit bagage seulement','Priority + 2 cabin bags','2 cabin bags (non prioritaire)','1x20kg + siège'],correct:2},
+  {id:24,cat:'b-bag',catLabel:'Options tarifaires',text:'Que comprend le tarif "Flexi+" chez Ryanair ?',choices:['2 cabin bags seulement','1x20kg + siège','Priority + 2 cabines + Fast Track + siège','Basic + 1 bagage soute'],correct:2},
+  {id:25,cat:'b-bag',catLabel:'Options tarifaires',text:'Que comprend le pack FAMI+ chez Ryanair (seulement avec enfant) ?',choices:['2x20kg + siège adulte','1x20kg + 1x10kg par personne + siège enfants','Priority + 2 cabines famille','1x23kg + siège famille'],correct:1},
+  {id:26,cat:'b-proc',catLabel:'Procédures',text:'Quels sont les 4 steps de l\'embarquement Ryanair ?',choices:['STD-50 / Annonce / Pré-boarding / Scan','STD-50 / Annonce / Checks / Pré-boarding','Annonce / Checks / Boarding / Clôture','STD-60 / Annonce / Checks / Boarding'],correct:1},
+  {id:27,cat:'b-proc',catLabel:'Procédures',text:'Quels sont les 3 checks à l\'embarquement Ryanair ?',choices:['Passeport / Visa / Sac','Priority queue / Passeport-Visa / Bags','Boarding pass / Identité / Bagage','Priority / Bagage / Sizer'],correct:1},
+  {id:28,cat:'b-proc',catLabel:'Timing embarquement',text:'À quelle heure l\'agent doit-il être présent en gate et scanner le 1er pax ?',choices:['H-60','H-55','H-50','H-45'],correct:2},
+  {id:29,cat:'b-proc',catLabel:'Timing embarquement',text:'À quelle heure a lieu la fermeture du check-in ?',choices:['H-50','H-45','H-40','H-35'],correct:2},
+  {id:30,cat:'b-proc',catLabel:'Timing embarquement',text:'À quelle heure commence le pré-boarding ?',choices:['H-50 à H-40','H-45 à H-35','H-40 à H-30','H-35 à H-25'],correct:1},
+  {id:31,cat:'b-proc',catLabel:'Timing embarquement',text:'À quelle heure a lieu le dernier call ?',choices:['H-25','H-20','H-15','H-10'],correct:1},
+  {id:32,cat:'b-proc',catLabel:'Timing embarquement',text:'À quelle heure a lieu la fermeture et recherche bagage ?',choices:['H-20','H-15','H-10','H-5'],correct:1},
+  {id:33,cat:'b-pmr',catLabel:'PMR & Assistance',text:'Que signifie WCHS chez Ryanair ?',choices:['Fauteuil roulant complet','Peut marcher mais max 2 marches','Accompagnement jusqu\'à la porte','Chaise aéro'],correct:1},
+  {id:34,cat:'b-pmr',catLabel:'PMR & Assistance',text:'Que signifie WCHC chez Ryanair ?',choices:['Peut marcher avec aide','Chaise roulante complète — assistance complète','Chaise aéro uniquement','Accompagnement rampe'],correct:1},
+  {id:35,cat:'b-pmr',catLabel:'PMR & Assistance',text:'Que signifie WCHR chez Ryanair ?',choices:['Assistance complète fauteuil','Chaise électrique','Accompagnement aéroport (peut marcher)','Chaise cabine uniquement'],correct:2},
+  {id:36,cat:'b-pmr',catLabel:'PMR & Assistance',text:'Combien d\'assistances PMR maximum par vol Ryanair ?',choices:['2','3','4','6'],correct:2},
+  {id:37,cat:'b-pmr',catLabel:'PMR & Assistance',text:'Combien de chiens aveugles maximum par vol Ryanair ?',choices:['2','3','4','6'],correct:2},
+  {id:38,cat:'b-spec',catLabel:'Cas spéciaux',text:'Qu\'est-ce qu\'un "bagage rush" ?',choices:['Bagage en excédent de poids','Bagage envoyé sans passager pour diverses raisons','Bagage perdu à retrouver','Bagage urgent en cabine'],correct:1},
+  {id:39,cat:'b-spec',catLabel:'Femme enceinte',text:'À partir de quelle semaine une femme enceinte doit-elle avoir un CM pour voler Ryanair ?',choices:['24 SA','28 SA','32 SA','36 SA'],correct:1},
+  {id:40,cat:'b-spec',catLabel:'Femme enceinte',text:'À partir de combien de semaines est-il interdit de voler si grossesse multiple ?',choices:['28 SA','30 SA','32 SA','36 SA'],correct:2},
+  {id:41,cat:'b-spec',catLabel:'Femme enceinte',text:'À partir de combien de semaines tout voyage est INTERDIT chez Ryanair (grossesse simple) ?',choices:['32 SA','34 SA','36 SA','38 SA'],correct:2},
+  {id:42,cat:'b-spec',catLabel:'Bébés & enfants',text:'Un bébé de 5 jours peut-il voyager sur Ryanair ?',choices:['Oui avec certificat médical','Oui si accompagné d\'un adulte','Non, interdit de 0 à 7 jours','Non, interdit de 0 à 14 jours'],correct:2},
+  {id:43,cat:'b-spec',catLabel:'Bébés & enfants',text:'Quel est l\'âge minimum pour voyager seul sur Ryanair ?',choices:['14 ans','15 ans','16 ans','18 ans'],correct:2},
+  {id:44,cat:'b-spec',catLabel:'Bébés & enfants',text:'Quel est l\'âge minimum pour voyager seul sur Wizzair ?',choices:['12 ans','14 ans','16 ans','18 ans'],correct:1},
+  {id:45,cat:'b-spec',catLabel:'Oxygène',text:'Quel est le tarif de l\'oxygène chez Ryanair (OXY) ?',choices:['55€','85€','110€','150€'],correct:2},
+  {id:46,cat:'b-spec',catLabel:'Oxygène',text:'Quel est le tarif de l\'oxygène chez Wizzair ?',choices:['35€','55€','75€','110€'],correct:1},
+  {id:47,cat:'b-spec',catLabel:'Staff & Duty',text:'Un STAFF paie-t-il les suppléments bagages chez Ryanair ?',choices:['Non, tout est gratuit','Oui, il paie les suppléments','Oui, mais tarif réduit 50%','Non, sauf excédent de poids'],correct:1},
+  {id:48,cat:'b-spec',catLabel:'Staff & Duty',text:'Un DUTY paie-t-il les suppléments bagages chez Ryanair ?',choices:['Oui, tarif normal','Oui, tarif réduit','Non, ne paie pas','Non, sauf le sizer'],correct:2},
+  {id:49,cat:'b-spec',catLabel:'Cas spéciaux',text:'Que se passe-t-il avec les poussettes électriques en soute ?',choices:['Acceptées avec batterie','Interdites en soute avec batterie — retirer batterie et prendre en cabine','Acceptées si batterie < 100Wh','Interdites peu importe'],correct:1},
+  {id:50,cat:'b-gate',catLabel:'Gate',text:'Un pax non-prioritaire arrive en gate avec 2 sacs. Que fait-on ?',choices:['On accepte les 2 sacs','On vérifie le sizer — si OK = PBAG 60€, si pas OK = GBT 75€','On lui demande de mettre un sac dans l\'autre','On refuse l\'embarquement'],correct:1},
+];
+
+const answers = {};
+
+function renderExam() {
+  const list = document.getElementById('questions-list');
+  list.innerHTML = '';
+  questions.forEach((q, qi) => {
+    const card = document.createElement('div');
+    card.className = 'card';
+    card.innerHTML = `
+      <div class="q-header">
+        <span class="q-num">Question ${qi+1} / ${questions.length}</span>
+        <span class="badge ${q.cat}">${q.catLabel}</span>
+      </div>
+      <div class="q-text">${q.text}</div>
+    `;
+    q.choices.forEach((c, ci) => {
+      const row = document.createElement('div');
+      row.className = 'choice' + (answers[q.id] === ci ? ' selected' : '');
+      row.innerHTML = `<div class="choice-dot"><div class="choice-dot-inner"></div></div><span class="choice-label">${c}</span>`;
+      row.addEventListener('click', () => {
+        answers[q.id] = ci;
+        card.querySelectorAll('.choice').forEach((r, i) => r.className = 'choice' + (i === ci ? ' selected' : ''));
+        updateProgress();
+      });
+      card.appendChild(row);
+    });
+    list.appendChild(card);
+  });
+  updateProgress();
+}
+
+function updateProgress() {
+  const count = Object.keys(answers).length;
+  document.getElementById('progress').style.width = Math.round(count / questions.length * 100) + '%';
+  document.getElementById('answered-count').textContent = count + ' / ' + questions.length + ' répondues';
+}
+
+function submitExam() {
+  let score = 0;
+  const details = [];
+  questions.forEach(q => {
+    const sel = answers[q.id];
+    const correct = sel !== undefined && sel === q.correct;
+    if (correct) score++;
+    details.push({ text: q.text, correct, answered: sel !== undefined, correctAnswer: q.choices[q.correct], userAnswer: sel !== undefined ? q.choices[sel] : null });
+  });
+  const pct = Math.round((score / questions.length) * 100);
+  const color = pct >= 70 ? '#1D9E75' : pct >= 50 ? '#BA7517' : '#D85A30';
+  const msg = pct >= 70 ? { bg: '#E1F5EE', c: '#085041', t: 'Excellent ! Tu maîtrises bien les procédures.' } : pct >= 50 ? { bg: '#FAEEDA', c: '#633806', t: 'Pas mal, encore quelques révisions !' } : { bg: '#FAECE7', c: '#712B13', t: 'Il faut encore réviser les procédures.' };
+  document.getElementById('score-display').innerHTML = `
+    <div class="score-big" style="color:${color}">${score}/${questions.length}</div>
+    <div class="score-pct">${pct}% de bonnes réponses</div>
+    <div class="score-msg" style="background:${msg.bg};color:${msg.c}">${msg.t}</div>
+  `;
+  let html = '';
+  details.forEach((d, i) => {
+    html += `<div class="r-item ${d.correct ? 'r-ok' : 'r-ko'}">
+      <div class="rq">${i+1}. ${d.text}</div>
+      <div class="ra">${d.correct ? '✓ ' + d.correctAnswer : (d.answered ? '✗ ' + d.userAnswer + ' → ' + d.correctAnswer : '— Sans réponse → ' + d.correctAnswer)}</div>
+    </div>`;
+  });
+  document.getElementById('results-detail').innerHTML = html;
+  document.getElementById('section-exam').classList.remove('active');
+  document.getElementById('section-results').classList.add('active');
+  document.getElementById('progress').style.width = '100%';
+  window.scrollTo(0, 0);
+}
+
+function retryExam() {
+  Object.keys(answers).forEach(k => delete answers[k]);
+  document.getElementById('section-results').classList.remove('active');
+  document.getElementById('section-exam').classList.add('active');
+  renderExam();
+  window.scrollTo(0, 0);
+}
+
+renderExam();
+</script>
+</body>
+</html>
