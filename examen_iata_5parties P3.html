@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Codes IATA — Charleroi (5 parties)</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f5f5f0; color: #1a1a1a; min-height: 100vh; }
+  .header { background: #185FA5; color: #fff; padding: 20px 16px 16px; text-align: center; }
+  .header h1 { font-size: 20px; font-weight: 600; margin-bottom: 4px; }
+  .header p { font-size: 13px; opacity: 0.85; }
+  .progress-bar { height: 4px; background: rgba(255,255,255,0.3); }
+  .progress-fill { height: 4px; background: #fff; transition: width 0.3s; }
+  .container { max-width: 600px; margin: 0 auto; padding: 16px; }
+
+  .part-select { margin-bottom: 16px; }
+  .part-select h2 { font-size: 16px; font-weight: 500; color: var(--color-text-primary, #111); margin-bottom: 12px; text-align: center; }
+  .part-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; }
+  .part-card { background: #fff; border-radius: 12px; border: 1px solid #e8e8e4; padding: 14px; cursor: pointer; text-align: center; transition: all 0.15s; }
+  .part-card:active { transform: scale(0.97); }
+  .part-card:hover { border-color: #185FA5; background: #EBF4FF; }
+  .part-num { font-size: 22px; font-weight: 700; color: #185FA5; }
+  .part-label { font-size: 12px; color: #888; margin-top: 2px; }
+  .part-card-all { background: #185FA5; color: #fff; border-radius: 12px; padding: 14px; cursor: pointer; text-align: center; border: none; width: 100%; font-size: 15px; font-weight: 600; margin-top: 4px; }
+  .part-card-all:active { transform: scale(0.98); }
+
+  .mode-bar { display: flex; gap: 8px; margin-bottom: 14px; }
+  .mode-btn { flex: 1; padding: 9px 4px; border-radius: 8px; border: 1.5px solid #ccc; background: #fff; cursor: pointer; font-size: 13px; font-weight: 500; color: #555; }
+  .mode-btn.active { background: #185FA5; color: #fff; border-color: #185FA5; }
+
+  .back-btn { display: flex; align-items: center; gap: 6px; background: none; border: none; color: #185FA5; font-size: 14px; font-weight: 500; cursor: pointer; margin-bottom: 14px; padding: 4px 0; }
+
+  .card { background: #fff; border-radius: 12px; border: 1px solid #e8e8e4; padding: 16px; margin-bottom: 14px; }
+  .q-num { font-size: 12px; color: #888; font-weight: 500; margin-bottom: 10px; }
+  .code-big { font-size: 40px; font-weight: 700; letter-spacing: 5px; color: #185FA5; margin-bottom: 6px; }
+  .q-text { font-size: 15px; font-weight: 600; line-height: 1.4; margin-bottom: 14px; color: #111; }
+  .choice { display: flex; align-items: center; gap: 12px; padding: 12px 14px; border: 1.5px solid #e8e8e4; border-radius: 10px; margin-bottom: 8px; cursor: pointer; user-select: none; -webkit-tap-highlight-color: transparent; }
+  .choice:active { transform: scale(0.98); }
+  .choice.selected { border-color: #185FA5; background: #EBF4FF; }
+  .choice-dot { width: 20px; height: 20px; border-radius: 50%; border: 1.5px solid #ccc; flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
+  .choice.selected .choice-dot { border-color: #185FA5; background: #185FA5; }
+  .dot-in { width: 8px; height: 8px; border-radius: 50%; background: #fff; opacity: 0; }
+  .choice.selected .dot-in { opacity: 1; }
+  .choice-label { font-size: 14px; color: #1a1a1a; line-height: 1.3; }
+
+  .sticky-btn { position: sticky; bottom: 0; background: #f5f5f0; padding: 10px 0 16px; }
+  .btn-primary { width: 100%; padding: 14px; border-radius: 12px; border: none; background: #185FA5; color: #fff; font-size: 16px; font-weight: 600; cursor: pointer; }
+  .btn-primary:active { transform: scale(0.98); }
+  .btn-outline { width: 100%; padding: 12px; border-radius: 12px; border: 1.5px solid #185FA5; background: #fff; color: #185FA5; font-size: 15px; font-weight: 600; cursor: pointer; margin-top: 10px; }
+  .answered-count { font-size: 13px; color: #888; text-align: center; margin-top: 8px; }
+
+  .score-section { text-align: center; padding: 28px 16px 20px; }
+  .score-big { font-size: 56px; font-weight: 700; }
+  .score-pct { font-size: 16px; color: #666; margin-top: 6px; }
+  .score-msg { font-size: 14px; margin-top: 12px; padding: 10px 16px; border-radius: 10px; font-weight: 500; }
+  .r-item { padding: 12px 14px; border-radius: 10px; margin-bottom: 8px; border: 1px solid; }
+  .r-ok { border-color: #0F6E56; background: #E1F5EE; }
+  .r-ko { border-color: #993C1D; background: #FAECE7; }
+  .r-ok .rq { color: #085041; font-size: 13px; font-weight: 600; margin-bottom: 3px; }
+  .r-ko .rq { color: #712B13; font-size: 13px; font-weight: 600; margin-bottom: 3px; }
+  .r-ok .ra { color: #0F6E56; font-size: 12px; }
+  .r-ko .ra { color: #993C1D; font-size: 12px; }
+
+  .section { display: none; }
+  .section.active { display: block; }
+  .part-badge { display: inline-block; background: #E6F1FB; color: #0C447C; font-size: 12px; padding: 3px 10px; border-radius: 20px; margin-bottom: 12px; font-weight: 500; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>Codes IATA — Charleroi</h1>
+  <p id="header-sub">Choisissez une partie</p>
+</div>
+<div class="progress-bar"><div class="progress-fill" id="progress" style="width:0%"></div></div>
+
+<div class="container">
+
+  <!-- MENU SÉLECTION PARTIE -->
+  <div id="section-menu" class="section active">
+    <div class="part-select">
+      <h2 style="margin-top:16px">Choisissez une partie</h2>
+      <div class="part-grid" id="part-grid"></div>
+      <button class="part-card-all" onclick="startPart(0)">Tout réviser (toutes les destinations)</button>
+    </div>
+  </div>
+
+  <!-- EXAMEN -->
+  <div id="section-exam" class="section">
+    <button class="back-btn" onclick="goMenu()">← Choisir une autre partie</button>
+    <div class="part-badge" id="part-badge"></div>
+    <div class="mode-bar">
+      <button class="mode-btn active" id="m-code" onclick="setMode('code')">Code → Ville</button>
+      <button class="mode-btn" id="m-dest" onclick="setMode('dest')">Ville → Code</button>
+      <button class="mode-btn" id="m-mix" onclick="setMode('mix')">Mixte</button>
+    </div>
+    <div id="questions-list"></div>
+    <div class="sticky-btn">
+      <button class="btn-primary" onclick="submitExam()">Soumettre les réponses</button>
+      <div class="answered-count" id="answered-count">0 / 0 répondues</div>
+    </div>
+  </div>
+
+  <!-- RÉSULTATS -->
+  <div id="section-results" class="section">
+    <div class="card score-section" id="score-display"></div>
+    <div id="results-detail"></div>
+    <button class="btn-outline" onclick="retryExam()">Recommencer cette partie</button>
+    <button class="btn-outline" style="margin-top:8px;background:#185FA5;color:#fff;border-color:#185FA5" onclick="goMenu()">Choisir une autre partie</button>
+    <div style="height:24px"></div>
+  </div>
+
+</div>
+
+<script>
+const all = [
+  ['ACE','Lanzarote'],['AGA','Agadir'],['AGP','Malaga'],['AHO','Alghero'],['AHU','Al Hoceima'],
+  ['AJA','Ajaccio'],['ALC','Alicante'],['AMM','Amman'],['AOI','Ancona'],['AQJ','Aqaba Jordan'],
+  ['ARN','Stockholm Arlanda'],['ATH','Athènes'],['AYT','Antalya'],['BCM','Bacau'],['BCN','Barcelone'],
+  ['BDS','Brindisi'],['BEG','Belgrade'],['BGY','Milan Bergame'],['BIA','Bastia'],['BIQ','Biarritz'],
+  ['BLL','Billund'],['BLQ','Bologne'],['BNX','Banja Luka'],['BOD','Bordeaux'],['BRI','Bari'],
+  ['BTS','Bratislava'],['BUD','Budapest'],['BVE','Brive'],['BZR','Béziers'],['CAG','Cagliari'],
+  ['CCF','Carcassonne'],['CDT','Castellon (Valence)'],['CFE','Clermont-Ferrand'],['CFU','Corfou'],
+  ['CHQ','Chania'],['CIA','Rome Ciampino'],['CIY','Comiso'],['CLJ','Cluj Napoca'],['CLY','Calvi'],
+  ['CPH','Copenhague'],['CRA','Craiova'],['CTA','Catane'],['CUF','Cuneo'],['DEB','Debrecen'],
+  ['DUB','Dublin'],['DBV','Dubrovnik'],['EDI','Edinburgh'],['EGC','Bergerac'],['ESB','Ankara'],
+  ['ESU','Essaouira'],['ETM','Eilat Ramon'],['FAO','Faro'],['FEZ','Fez'],['FMM','Memmingen Munich'],
+  ['FNC','Madère-Funchal'],['FNI','Nîmes'],['FSC','Figari'],['FUE','Fuerteventura'],['GDN','Gdansk'],
+  ['GLA','Glasgow'],['GOA','Gènes'],['GOT','Göteborg Landvetter'],['GRO','Gérone'],['GSE','Göteborg City'],
+  ['HEL','Helsinki'],['HER','Héraklion'],['IAS','Iasi'],['IBZ','Ibiza'],['JTR','Santorin'],
+  ['KGS','Kos'],['KLU','Klagenfurt'],['KRK','Krakow'],['KTW','Katowice'],['KUN','Kaunas'],
+  ['KUT','Kutaisi'],['LCA','Larnaca'],['LCJ','Lodz'],['LDE','Lourdes'],['LEI','Almeria'],
+  ['LIG','Limoges'],['LIS','Lisbonne'],['LJU','Ljubljana'],['LPA','Gran Canaria (Las Palmas)'],
+  ['LPL','Liverpool'],['LPP','Lappeenranta'],['LRH','La Rochelle'],['LUZ','Lublin'],['LWO','Lviv'],
+  ['LYS','Lyon'],['MAD','Madrid'],['MAH','Menorque'],['MAN','Manchester'],['MLA','Malta'],
+  ['MPL','Montpellier'],['MRS','Marseille'],['NAP','Naples'],['NCE','Nice'],['NCL','Newcastle'],
+  ['NDR','Nador'],['NTE','Nantes'],['NYO','Stockholm Skavsta'],['OLB','Olbia'],['OPO','Porto'],
+  ['ORK','Cork'],['OTP','Bucharest-Otopeni'],['OUD','Oujda'],['OVD','Asturias'],['OZZ','Ouarzazate'],
+  ['PDL','Ponta Delgada'],['PDV','Plovdiv'],['PEG','Perugia'],['PFO','Paphos'],['PGF','Perpignan'],
+  ['PIK','Glasgow-Prestwick'],['PMI','Palma de Mallorca'],['PMO','Palerme'],['POZ','Poznan'],
+  ['PRG','Prague'],['PRN','Pristina'],['PSA','Pisa'],['PSR','Pescara'],['PUF','Pau'],['PUY','Pula'],
+  ['QSR','Salerno'],['RAK','Marrakech'],['RBA','Rabat'],['RDZ','Rodez'],['REG','Reggio Calabria'],
+  ['REU','Reus'],['RHO','Rhodes'],['RIX','Riga'],['RJK','Rijeka'],['RMO','Chisinau'],
+  ['RMU','Murcia'],['RVN','Laponie-Rovaniemi'],['RYG','Oslo Rygge'],['SAW','Istanbul'],
+  ['SBZ','Sibiu'],['SCQ','Santiago de Compostelle'],['SCV','Suceava'],['SDR','Santander'],
+  ['SJJ','Sarajevo'],['SKG','Thessalonique'],['SKP','Skopje'],['SOF','Sofia'],['SUF','Lamezia'],
+  ['SVQ','Séville'],['TFS','Tenerife Sud'],['TGD','Podgorica'],['TGM','Targu Mures'],['TIA','Tirana'],
+  ['TKU','Turku'],['TLN','Toulon'],['TLS','Toulouse'],['TLV','Tel Aviv'],['TNG','Tanger'],
+  ['TPS','Trapani'],['TRN','Turin'],['TRS','Trieste'],['TSF','Venise Trévise'],['TSR','Timisoara'],
+  ['TTU','Tétouan'],['VAR','Varna'],['VCE','Venise'],['VDA','Ovda'],['VIE','Vienne'],
+  ['VIT','Vitoria'],['VLC','Valence'],['VLL','Vallodolid'],['VNO','Vilnius'],['VOL','Volos'],
+  ['VRN','Vérone'],['WAW','Varsovie Chopin'],['WMI','Varsovie Modlin'],['WRO','Wroclaw']
+];
+
+// Découper en 5 parties égales
+const total = all.length;
+const size = Math.ceil(total / 5);
+const parts = [];
+for (let i = 0; i < 5; i++) {
+  parts.push(all.slice(i * size, (i + 1) * size));
+}
+
+let currentPart = null;
+let mode = 'code';
+let questions = [];
+const answers = {};
+
+// Construire le menu
+function buildMenu() {
+  const grid = document.getElementById('part-grid');
+  grid.innerHTML = '';
+  parts.forEach((p, i) => {
+    const first = p[0][0];
+    const last = p[p.length - 1][0];
+    const div = document.createElement('div');
+    div.className = 'part-card';
+    div.innerHTML = `<div class="part-num">Partie ${i + 1}</div>
+      <div class="part-label">${first} → ${last}</div>
+      <div class="part-label" style="margin-top:4px;font-size:11px">${p.length} destinations</div>`;
+    div.addEventListener('click', () => startPart(i + 1));
+    grid.appendChild(div);
+  });
+}
+
+function startPart(n) {
+  currentPart = n;
+  mode = 'code';
+  ['code','dest','mix'].forEach(x => document.getElementById('m-'+x).classList.toggle('active', x === 'code'));
+  buildQuestions();
+  showSection('exam');
+  const pool = n === 0 ? all : parts[n - 1];
+  document.getElementById('part-badge').textContent = n === 0 ? 'Toutes les destinations — ' + all.length + ' questions' : 'Partie ' + n + ' — ' + pool.length + ' questions';
+  document.getElementById('header-sub').textContent = n === 0 ? 'Toutes les destinations' : 'Partie ' + n + ' / 5';
+  document.getElementById('progress').style.width = '0%';
+  window.scrollTo(0, 0);
+}
+
+function setMode(m2) {
+  mode = m2;
+  ['code','dest','mix'].forEach(x => document.getElementById('m-'+x).classList.toggle('active', x === m2));
+  buildQuestions();
+}
+
+function shuffle(a) { return [...a].sort(() => Math.random() - 0.5); }
+
+function buildQuestions() {
+  Object.keys(answers).forEach(k => delete answers[k]);
+  const pool = currentPart === 0 ? all : parts[currentPart - 1];
+  const shuffled = shuffle(pool);
+  questions = shuffled.map((d, i) => {
+    const askCode = mode === 'code' ? true : mode === 'dest' ? false : Math.random() > 0.5;
+    const wrongs = shuffle(all.filter(x => x[0] !== d[0])).slice(0, 3);
+    if (askCode) {
+      const opts = shuffle([d[1], ...wrongs.map(w => w[1])]);
+      return { id: i, code: d[0], dest: d[1], askCode: true, choices: opts, correct: opts.indexOf(d[1]) };
+    } else {
+      const opts = shuffle([d[0], ...wrongs.map(w => w[0])]);
+      return { id: i, code: d[0], dest: d[1], askCode: false, choices: opts, correct: opts.indexOf(d[0]) };
+    }
+  });
+  renderExam();
+}
+
+function renderExam() {
+  const list = document.getElementById('questions-list');
+  list.innerHTML = '';
+  const tot = questions.length;
+  questions.forEach((q, qi) => {
+    const card = document.createElement('div');
+    card.className = 'card';
+    if (q.askCode) {
+      card.innerHTML = `<div class="q-num">Question ${qi+1} / ${tot}</div>
+        <div class="code-big">${q.code}</div>
+        <div class="q-text">Quelle est la destination de ce code IATA ?</div>`;
+    } else {
+      card.innerHTML = `<div class="q-num">Question ${qi+1} / ${tot}</div>
+        <div class="q-text">Quel est le code IATA de <strong>${q.dest}</strong> ?</div>`;
+    }
+    q.choices.forEach((c, ci) => {
+      const row = document.createElement('div');
+      row.className = 'choice' + (answers[q.id] === ci ? ' selected' : '');
+      row.innerHTML = `<div class="choice-dot"><div class="dot-in"></div></div><span class="choice-label">${c}</span>`;
+      row.addEventListener('click', () => {
+        answers[q.id] = ci;
+        card.querySelectorAll('.choice').forEach((r, i) => r.className = 'choice' + (i === ci ? ' selected' : ''));
+        updateProgress();
+      });
+      card.appendChild(row);
+    });
+    list.appendChild(card);
+  });
+  updateProgress();
+}
+
+function updateProgress() {
+  const tot = questions.length;
+  const count = Object.keys(answers).length;
+  document.getElementById('progress').style.width = Math.round(count / tot * 100) + '%';
+  document.getElementById('answered-count').textContent = count + ' / ' + tot + ' répondues';
+}
+
+function submitExam() {
+  const tot = questions.length;
+  let score = 0;
+  const details = [];
+  questions.forEach(q => {
+    const sel = answers[q.id];
+    const correct = sel !== undefined && sel === q.correct;
+    if (correct) score++;
+    details.push({ q, correct, answered: sel !== undefined, correctAnswer: q.choices[q.correct], userAnswer: sel !== undefined ? q.choices[sel] : null });
+  });
+  const pct = Math.round(score / tot * 100);
+  const color = pct >= 70 ? '#1D9E75' : pct >= 50 ? '#BA7517' : '#D85A30';
+  const msg = pct >= 70
+    ? { bg: '#E1F5EE', c: '#085041', t: 'Excellent ! Tu connais bien tes codes.' }
+    : pct >= 50
+    ? { bg: '#FAEEDA', c: '#633806', t: 'Pas mal, encore un peu de révisions !' }
+    : { bg: '#FAECE7', c: '#712B13', t: 'Il faut encore réviser ces codes.' };
+  document.getElementById('score-display').innerHTML = `
+    <div class="score-big" style="color:${color}">${score}/${tot}</div>
+    <div class="score-pct">${pct}% de bonnes réponses</div>
+    <div class="score-msg" style="background:${msg.bg};color:${msg.c}">${msg.t}</div>`;
+  let html = '';
+  details.forEach((d, i) => {
+    const label = d.q.askCode ? d.q.code + ' → ?' : '? → ' + d.q.dest;
+    html += `<div class="r-item ${d.correct ? 'r-ok' : 'r-ko'}">
+      <div class="rq">${i+1}. ${label}</div>
+      <div class="ra">${d.correct ? '✓ ' + d.correctAnswer : (d.answered ? '✗ ' + d.userAnswer + ' → ' + d.correctAnswer : '— Sans réponse → ' + d.correctAnswer)}</div>
+    </div>`;
+  });
+  document.getElementById('results-detail').innerHTML = html;
+  showSection('results');
+  document.getElementById('progress').style.width = '100%';
+  window.scrollTo(0, 0);
+}
+
+function retryExam() {
+  buildQuestions();
+  showSection('exam');
+  window.scrollTo(0, 0);
+}
+
+function goMenu() {
+  showSection('menu');
+  document.getElementById('progress').style.width = '0%';
+  document.getElementById('header-sub').textContent = 'Choisissez une partie';
+  window.scrollTo(0, 0);
+}
+
+function showSection(name) {
+  ['menu','exam','results'].forEach(s => {
+    document.getElementById('section-' + s).classList.toggle('active', s === name);
+  });
+}
+
+buildMenu();
+</script>
+</body>
+</html>
